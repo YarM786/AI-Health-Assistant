@@ -25,7 +25,7 @@ else:
 
 option = st.sidebar.selectbox(
     "Choose Service",
-    ["Symptom Checker", "Image Disease Scanner"]
+    ["Symptom Checker", "Image Disease Scanner", "Live Skin Scanner"]
 )
 
 # -----------------------------------
@@ -62,14 +62,17 @@ if option == "Symptom Checker":
             st.error("Please enter symptoms.")
 
 # -----------------------------------
-# 2️⃣ Image Disease Scanner
+# 2️⃣ Image Disease Scanner (Upload)
 # -----------------------------------
 
 elif option == "Image Disease Scanner":
 
     st.header("📷 Upload Medical Image")
 
-    uploaded_file = st.file_uploader("Upload image (skin / report / x-ray)", type=["jpg", "png", "jpeg"])
+    uploaded_file = st.file_uploader(
+        "Upload image (skin / report / x-ray)", 
+        type=["jpg", "png", "jpeg"]
+    )
 
     user_city = st.text_input("Enter your city for nearby hospital suggestion:")
 
@@ -77,7 +80,6 @@ elif option == "Image Disease Scanner":
         st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
         if st.button("Scan Image"):
-            # Simulated AI prediction
             possible_diseases = [
                 ("Skin Infection", "Dermatologist"),
                 ("Pneumonia", "Pulmonologist"),
@@ -92,12 +94,46 @@ elif option == "Image Disease Scanner":
 
             if user_city.strip() != "":
                 st.subheader("🏥 Suggested Nearby Hospital")
-
                 st.write(f"City: {user_city}")
-                st.write(f"Recommended Hospital in {user_city}:")
                 st.write(f"• {user_city} General Hospital")
                 st.write(f"• City Care Medical Center")
                 st.write(f"• Al-Shifa Health Clinic")
+            else:
+                st.info("Enter your city to get hospital suggestions.")
 
+# -----------------------------------
+# 3️⃣ Live Camera Skin Scanner
+# -----------------------------------
+
+elif option == "Live Skin Scanner":
+
+    st.header("📷 Live Skin Scanner (Camera Detection)")
+
+    user_city = st.text_input("Enter your city for hospital suggestion:")
+
+    camera_image = st.camera_input("Take a photo of your skin area")
+
+    if camera_image is not None:
+        st.image(camera_image, caption="Captured Image", use_column_width=True)
+
+        if st.button("Analyze Live Image"):
+            possible_diseases = [
+                ("Acne", "Dermatologist"),
+                ("Skin Allergy", "Dermatologist"),
+                ("Eczema", "Dermatologist"),
+                ("Normal Skin", "No Specialist Required")
+            ]
+
+            prediction = random.choice(possible_diseases)
+
+            st.success(f"Detected Condition: {prediction[0]}")
+            st.write(f"Recommended Specialist: {prediction[1]}")
+
+            if user_city.strip() != "":
+                st.subheader("🏥 Suggested Nearby Hospital")
+                st.write(f"City: {user_city}")
+                st.write(f"• {user_city} General Hospital")
+                st.write(f"• City Care Medical Center")
+                st.write(f"• Al-Shifa Health Clinic")
             else:
                 st.info("Enter your city to get hospital suggestions.")
