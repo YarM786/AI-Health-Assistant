@@ -1,4 +1,5 @@
 import streamlit as st
+import random
 
 st.set_page_config(page_title="AI Healthcare Assistant", layout="wide")
 
@@ -16,32 +17,87 @@ st.warning("⚠ This system provides AI-based guidance only. Please consult a ce
 if API_KEY:
     st.success("API Key Loaded Securely ✅")
 else:
-    st.info("Running without API key (local/test mode)")
+    st.info("Running without API key (Demo mode)")
 
-# ---------------------------
-# Symptom Checker
-# ---------------------------
+# -----------------------------------
+# Sidebar Menu
+# -----------------------------------
 
-symptoms = st.text_area("Describe your symptoms:")
+option = st.sidebar.selectbox(
+    "Choose Service",
+    ["Symptom Checker", "Image Disease Scanner"]
+)
 
-if st.button("Analyze"):
-    if symptoms.strip() != "":
-        symptoms = symptoms.lower()
+# -----------------------------------
+# 1️⃣ Symptom Checker
+# -----------------------------------
 
-        if "fever" in symptoms:
-            st.success("Possible Condition: Flu")
-            st.write("Recommended Specialist: General Physician")
+if option == "Symptom Checker":
 
-        elif "rash" in symptoms:
-            st.success("Possible Condition: Skin Allergy")
-            st.write("Recommended Specialist: Dermatologist")
+    symptoms = st.text_area("Describe your symptoms:")
 
-        elif "chest pain" in symptoms:
-            st.success("Possible Condition: Heart Issue")
-            st.write("Recommended Specialist: Cardiologist")
+    if st.button("Analyze Symptoms"):
+        if symptoms.strip() != "":
+            symptoms = symptoms.lower()
 
+            if "fever" in symptoms:
+                disease = "Flu"
+                specialist = "General Physician"
+
+            elif "rash" in symptoms:
+                disease = "Skin Allergy"
+                specialist = "Dermatologist"
+
+            elif "chest pain" in symptoms:
+                disease = "Heart Issue"
+                specialist = "Cardiologist"
+
+            else:
+                disease = "Common Infection"
+                specialist = "General Physician"
+
+            st.success(f"Possible Condition: {disease}")
+            st.write(f"Recommended Specialist: {specialist}")
         else:
-            st.success("Possible Condition: Common Infection")
-            st.write("Recommended Specialist: General Physician")
-    else:
-        st.error("Please enter symptoms.")
+            st.error("Please enter symptoms.")
+
+# -----------------------------------
+# 2️⃣ Image Disease Scanner
+# -----------------------------------
+
+elif option == "Image Disease Scanner":
+
+    st.header("📷 Upload Medical Image")
+
+    uploaded_file = st.file_uploader("Upload image (skin / report / x-ray)", type=["jpg", "png", "jpeg"])
+
+    user_city = st.text_input("Enter your city for nearby hospital suggestion:")
+
+    if uploaded_file is not None:
+        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+
+        if st.button("Scan Image"):
+            # Simulated AI prediction
+            possible_diseases = [
+                ("Skin Infection", "Dermatologist"),
+                ("Pneumonia", "Pulmonologist"),
+                ("Fracture", "Orthopedic"),
+                ("Normal", "No Specialist Required")
+            ]
+
+            prediction = random.choice(possible_diseases)
+
+            st.success(f"Detected Condition: {prediction[0]}")
+            st.write(f"Recommended Specialist: {prediction[1]}")
+
+            if user_city.strip() != "":
+                st.subheader("🏥 Suggested Nearby Hospital")
+
+                st.write(f"City: {user_city}")
+                st.write(f"Recommended Hospital in {user_city}:")
+                st.write(f"• {user_city} General Hospital")
+                st.write(f"• City Care Medical Center")
+                st.write(f"• Al-Shifa Health Clinic")
+
+            else:
+                st.info("Enter your city to get hospital suggestions.")
