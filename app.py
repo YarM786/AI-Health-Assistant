@@ -69,13 +69,37 @@ h1, h2, h3, h4, h5, h6, p, label { color: white !important; }
     margin: 16px 0;
     backdrop-filter: blur(10px);
 }
+
+.response-card {
+    background: linear-gradient(135deg, rgba(0,198,255,0.08), rgba(0,114,255,0.08));
+    border: 1px solid rgba(0,198,255,0.35);
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin: 14px 0;
+}
+
+.firstaid-card {
+    background: linear-gradient(135deg, rgba(0,255,136,0.07), rgba(0,198,100,0.07));
+    border: 1px solid rgba(0,255,136,0.3);
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin: 14px 0;
+}
+
+.specialist-card {
+    background: linear-gradient(135deg, rgba(255,180,0,0.08), rgba(255,120,0,0.08));
+    border: 1px solid rgba(255,180,0,0.35);
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin: 14px 0;
+}
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
 
 st.title("🩺 AI Powered Healthcare Assistant")
 st.markdown("Your smart health guidance companion — speak or type your symptoms")
-st.warning("⚠ This system provides AI-based guidance only. Please consult a certified medical professional.")
+st.warning("⚠ This system provides AI-based guidance only. Please consult a certified medical professional for proper treatment.")
 
 # -----------------------------------
 # Sidebar Menu
@@ -85,11 +109,214 @@ option = st.sidebar.selectbox(
     ["Symptom Checker", "Image Disease Scanner", "Live Skin Scanner", "World Famous Hospitals"]
 )
 
-# -------------------------
+# -----------------------------------------------
+# Disease Knowledge Base
+# Each entry: keywords, diagnosis, specialist,
+#             first_aid (list), voice_response (spoken text)
+# -----------------------------------------------
+DISEASE_DB = [
+    {
+        "keywords": ["fever", "temperature", "chills", "shivering", "hot body", "high temp"],
+        "condition": "Fever / Viral Infection",
+        "emoji": "🌡️",
+        "specialist": "General Physician",
+        "diagnosis": "You appear to have a fever. This is often caused by a viral or bacterial infection and your body's immune system fighting it.",
+        "first_aid": [
+            "💧 Drink plenty of fluids — water, ORS, or coconut water to stay hydrated",
+            "🛏️ Rest completely and avoid physical exertion",
+            "🧊 Apply a cool damp cloth on your forehead to reduce temperature",
+            "💊 Take paracetamol (e.g. Panadol) as directed if temperature exceeds 38.5°C",
+            "🚫 Avoid tea, coffee, and cold drinks",
+            "🌡️ Monitor temperature every 2–3 hours",
+            "🏥 Visit a doctor if fever exceeds 39.5°C or lasts more than 2 days",
+        ],
+        "voice_response": "You appear to have a fever. Here is your first aid advice. Drink plenty of fluids and rest. Apply a cool damp cloth on your forehead. Take paracetamol if temperature exceeds 38 point 5 degrees. Monitor your temperature every few hours and visit a doctor if fever lasts more than 2 days.",
+    },
+    {
+        "keywords": ["headache", "migraine", "head pain", "head ache", "head hurts", "throbbing head"],
+        "condition": "Headache / Migraine",
+        "emoji": "🧠",
+        "specialist": "Neurologist",
+        "diagnosis": "You may be experiencing a tension headache or migraine. Common causes include stress, dehydration, eye strain, or neurological issues.",
+        "first_aid": [
+            "🌑 Rest in a quiet, dark room away from screens and noise",
+            "💧 Drink 2–3 glasses of water immediately as dehydration is a common cause",
+            "🧊 Apply a cold or warm compress on your forehead or neck",
+            "💊 Take ibuprofen or paracetamol as directed for pain relief",
+            "😴 Sleep for at least 30 minutes if possible",
+            "🚫 Avoid bright lights, loud sounds, and phone screens",
+            "🏥 See a Neurologist if headache is severe, recurring, or comes with vomiting",
+        ],
+        "voice_response": "You may have a headache or migraine. Rest in a quiet dark room and drink water immediately. Apply a cold compress on your forehead. Take ibuprofen or paracetamol for pain relief. Avoid bright lights and screens. If headaches are severe or recurring, please consult a Neurologist.",
+    },
+    {
+        "keywords": ["rash", "itching", "itch", "skin rash", "allergy", "hives", "red skin", "bumps on skin"],
+        "condition": "Skin Allergy / Rash",
+        "emoji": "🩹",
+        "specialist": "Dermatologist",
+        "diagnosis": "You may have a skin allergy, contact dermatitis, or hives. This can be triggered by food, medicine, plants, or chemicals.",
+        "first_aid": [
+            "🚿 Gently wash the affected area with cool water and mild soap",
+            "🚫 Do NOT scratch — it worsens the rash and can cause infection",
+            "🧴 Apply calamine lotion or a mild hydrocortisone cream to reduce itching",
+            "💊 Take an antihistamine (e.g. cetirizine) to reduce allergic reaction",
+            "🧊 Apply a cool compress to soothe burning or swelling",
+            "👕 Wear loose, breathable cotton clothing",
+            "🏥 See a Dermatologist immediately if rash spreads rapidly or causes breathing difficulty",
+        ],
+        "voice_response": "You may have a skin allergy or rash. Wash the affected area with cool water. Do not scratch as it worsens the condition. Apply calamine lotion and take an antihistamine tablet. Wear loose cotton clothing. If the rash spreads rapidly or causes breathing difficulty, see a Dermatologist immediately.",
+    },
+    {
+        "keywords": ["chest pain", "heart pain", "chest tightness", "heart attack", "angina", "chest pressure", "heart"],
+        "condition": "Chest Pain / Cardiac Emergency",
+        "emoji": "❤️",
+        "specialist": "Cardiologist",
+        "diagnosis": "Chest pain is a serious symptom that could indicate a cardiac event, angina, or other heart-related condition. This requires immediate attention.",
+        "first_aid": [
+            "🚨 CALL EMERGENCY SERVICES (115 / 1122) IMMEDIATELY",
+            "🛋️ Sit or lie down in a comfortable position — do NOT walk around",
+            "👗 Loosen tight clothing around your chest and neck",
+            "💊 If prescribed, take aspirin (300mg) or GTN spray as directed by your doctor",
+            "😮‍💨 Take slow, deep breaths to stay calm",
+            "🚫 Do NOT eat or drink anything",
+            "👥 Stay with someone — do NOT be alone until help arrives",
+        ],
+        "voice_response": "Chest pain is a serious emergency. Call emergency services immediately. Sit or lie down and do not walk around. Loosen tight clothing. Take slow deep breaths to stay calm. If prescribed, take aspirin. Do not eat or drink anything. Do not stay alone — wait for medical help immediately.",
+    },
+    {
+        "keywords": ["cough", "cold", "flu", "sore throat", "runny nose", "sneezing", "congestion", "blocked nose"],
+        "condition": "Cold / Flu / Respiratory Infection",
+        "emoji": "🤧",
+        "specialist": "General Physician",
+        "diagnosis": "You appear to have a cold, flu, or upper respiratory tract infection. These are usually viral and resolve within 5–7 days with proper care.",
+        "first_aid": [
+            "☕ Drink warm fluids — herbal tea, warm water with honey and lemon, or broth",
+            "🛏️ Get adequate rest — sleep at least 8 hours",
+            "💨 Inhale steam from hot water to relieve nasal congestion",
+            "🍯 Take a teaspoon of honey to soothe sore throat",
+            "💊 Take paracetamol for fever or body aches if needed",
+            "🧴 Use saline nasal spray or drops for blocked nose",
+            "🏥 See a doctor if symptoms worsen after 5 days or you develop high fever or shortness of breath",
+        ],
+        "voice_response": "You may have a cold or flu. Drink warm fluids like herbal tea with honey and lemon. Rest and sleep well. Inhale steam to relieve congestion. Take paracetamol for fever. Use saline nasal drops for blocked nose. Visit a doctor if symptoms worsen after 5 days or you develop breathing difficulty.",
+    },
+    {
+        "keywords": ["stomach", "stomach pain", "nausea", "vomiting", "diarrhea", "loose motion", "indigestion", "bloating", "abdominal pain", "stomach ache"],
+        "condition": "Gastrointestinal Issue / Stomach Problem",
+        "emoji": "🫀",
+        "specialist": "Gastroenterologist",
+        "diagnosis": "You may be experiencing a stomach infection, food poisoning, indigestion, or gastritis. These are common and usually manageable at home.",
+        "first_aid": [
+            "💧 Sip small amounts of water or ORS frequently to prevent dehydration",
+            "🍚 Eat light, bland food — rice, boiled potatoes, toast, or bananas (BRAT diet)",
+            "🚫 Avoid spicy, oily, dairy, or heavy food completely",
+            "🛏️ Rest and avoid physical activity",
+            "💊 Take oral rehydration salts (ORS) if experiencing diarrhea or vomiting",
+            "🌿 Ginger tea or peppermint tea can help with nausea",
+            "🏥 See a Gastroenterologist if symptoms persist beyond 48 hours or you see blood in stool/vomit",
+        ],
+        "voice_response": "You may have a stomach infection or gastrointestinal issue. Sip water or ORS frequently to stay hydrated. Eat light bland food like rice and toast. Avoid spicy and oily food. Take ginger tea for nausea. See a Gastroenterologist if symptoms persist beyond 48 hours or you notice blood in stool or vomit.",
+    },
+    {
+        "keywords": ["diabetes", "sugar", "high sugar", "blood sugar", "low sugar", "hypoglycemia", "hyperglycemia"],
+        "condition": "Diabetes / Blood Sugar Issue",
+        "emoji": "🍬",
+        "specialist": "Endocrinologist",
+        "diagnosis": "You may be experiencing symptoms related to blood sugar fluctuation — either high (hyperglycemia) or low (hypoglycemia) blood sugar levels.",
+        "first_aid": [
+            "🍬 If feeling dizzy/shaky (low sugar): immediately eat 15g of fast sugar — glucose tablets, juice, or sugar",
+            "💧 Drink water regularly and stay hydrated",
+            "🥗 Eat small frequent meals — avoid skipping meals",
+            "🚫 Avoid sweets, sugary drinks, and refined carbohydrates",
+            "💊 Take your prescribed diabetes medication on time",
+            "📊 Monitor blood sugar levels with a glucometer",
+            "🏥 See an Endocrinologist regularly for proper management",
+        ],
+        "voice_response": "You may have a blood sugar issue related to diabetes. If feeling dizzy or shaky from low sugar, immediately eat glucose tablets or drink juice. Stay hydrated, eat small frequent meals, and avoid sweets. Take your prescribed medication on time and monitor blood sugar regularly. Consult an Endocrinologist for proper management.",
+    },
+    {
+        "keywords": ["back pain", "back ache", "lower back", "spine", "backache", "lumbar pain"],
+        "condition": "Back Pain / Musculoskeletal Issue",
+        "emoji": "🦴",
+        "specialist": "Orthopedic Specialist",
+        "diagnosis": "You may be experiencing muscle strain, lumbar pain, or a spinal issue. Poor posture, heavy lifting, or prolonged sitting are common causes.",
+        "first_aid": [
+            "🛏️ Rest and avoid activities that worsen the pain",
+            "🧊 Apply an ice pack for the first 48 hours (15–20 min intervals) to reduce inflammation",
+            "🔥 After 48 hours, switch to a warm compress or heating pad to relax muscles",
+            "💊 Take ibuprofen or a muscle relaxant as directed",
+            "🧘 Do gentle stretches — knee-to-chest stretch or child's pose",
+            "🪑 Improve your sitting posture — use a lumbar support cushion",
+            "🏥 See an Orthopedic Specialist if pain radiates to legs or lasts more than a week",
+        ],
+        "voice_response": "You may have back pain or a musculoskeletal issue. Rest and avoid heavy lifting. Apply ice for the first 48 hours then switch to a warm compress. Take ibuprofen for pain relief. Do gentle stretches and improve your sitting posture. See an Orthopedic Specialist if pain radiates to your legs or lasts more than one week.",
+    },
+    {
+        "keywords": ["anxiety", "stress", "panic", "panic attack", "anxious", "nervous", "mental health", "depression", "sad", "depressed"],
+        "condition": "Anxiety / Mental Health",
+        "emoji": "🧘",
+        "specialist": "Psychiatrist / Psychologist",
+        "diagnosis": "You may be experiencing anxiety, stress, or signs of depression. Mental health is just as important as physical health and deserves proper care.",
+        "first_aid": [
+            "😮‍💨 Practice deep breathing — inhale for 4 counts, hold 4, exhale 4 (box breathing)",
+            "🧘 Try grounding: name 5 things you see, 4 you feel, 3 you hear, 2 you smell, 1 you taste",
+            "🚶 Take a short walk outside — fresh air and movement reduce anxiety quickly",
+            "📵 Limit social media and news consumption",
+            "💬 Talk to a trusted friend or family member about how you feel",
+            "😴 Ensure 7–8 hours of quality sleep every night",
+            "🏥 Consult a Psychiatrist or Psychologist — mental health care is not weakness",
+        ],
+        "voice_response": "You may be experiencing anxiety or stress. Practice deep breathing by inhaling for 4 counts, holding for 4, and exhaling for 4. Try grounding techniques and take a short walk outside. Limit social media use and talk to someone you trust. Ensure you get 7 to 8 hours of sleep. Please consult a Psychiatrist or Psychologist for proper support.",
+    },
+    {
+        "keywords": ["eye", "eyes", "eye pain", "blurry vision", "red eye", "eye irritation", "conjunctivitis", "itchy eyes"],
+        "condition": "Eye Problem / Conjunctivitis",
+        "emoji": "👁️",
+        "specialist": "Ophthalmologist",
+        "diagnosis": "You may have an eye infection (conjunctivitis), eye strain, or irritation. These can be caused by infection, allergies, or excessive screen time.",
+        "first_aid": [
+            "💧 Rinse your eye gently with clean, cool water or saline solution",
+            "🚫 Do NOT rub your eyes — it worsens irritation and spreads infection",
+            "🌿 Apply a clean cool compress over closed eyes to soothe redness",
+            "💊 Use antibiotic eye drops only if prescribed by a doctor",
+            "📵 Reduce screen time and take 20-20-20 breaks (every 20 min, look 20 feet away for 20 sec)",
+            "🙅 Do not share towels, pillows, or eye products with others",
+            "🏥 See an Ophthalmologist if vision becomes blurry or pain is severe",
+        ],
+        "voice_response": "You may have an eye problem or conjunctivitis. Rinse your eye gently with clean cool water. Do not rub your eyes. Apply a cool compress over closed eyes. Reduce screen time and take regular breaks. Do not share towels or eye products. See an Ophthalmologist if vision becomes blurry or pain is severe.",
+    },
+]
+
+DEFAULT_RESPONSE = {
+    "condition": "General Health Concern",
+    "emoji": "🩺",
+    "specialist": "General Physician",
+    "diagnosis": "Based on your input, I could not identify a specific condition. It is best to consult a General Physician who can properly evaluate your symptoms.",
+    "first_aid": [
+        "🛏️ Rest and avoid strenuous activity",
+        "💧 Stay hydrated — drink at least 8 glasses of water daily",
+        "🥗 Eat a balanced, nutritious diet",
+        "😴 Get at least 7–8 hours of sleep",
+        "🚫 Avoid self-medicating without a doctor's advice",
+        "🏥 Visit a General Physician for a proper diagnosis",
+    ],
+    "voice_response": "Based on your symptoms, I recommend consulting a General Physician for a proper diagnosis. In the meantime, rest well, stay hydrated, eat nutritious food, and avoid self-medicating. Please take care of your health.",
+}
+
+# -----------------------------------------------
 # Helper Functions
-# -------------------------
+# -----------------------------------------------
+def get_disease_info(user_input):
+    """Match user input to disease knowledge base"""
+    user_input_lower = user_input.lower()
+    for disease in DISEASE_DB:
+        for keyword in disease["keywords"]:
+            if keyword in user_input_lower:
+                return disease
+    return DEFAULT_RESPONSE
+
 def text_to_speech_base64(text):
-    """Convert text to base64-encoded MP3 for inline browser playback"""
+    """Convert text to base64-encoded MP3"""
     tts = gTTS(text=text, lang="en")
     tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
     tts.save(tmp_file.name)
@@ -98,31 +325,13 @@ def text_to_speech_base64(text):
     os.remove(tmp_file.name)
     return base64.b64encode(audio_bytes).decode()
 
-def get_assistant_response(user_input):
-    """Generate assistant response based on symptoms"""
-    user_input = user_input.lower()
-    if "fever" in user_input or "temperature" in user_input:
-        return "It seems like you may have a fever. Stay hydrated, rest well, and please consult a General Physician if the fever persists beyond two days."
-    elif "rash" in user_input or "itching" in user_input or "skin" in user_input:
-        return "This may be a skin allergy or dermatitis. Avoid scratching and consult a Dermatologist for proper diagnosis and treatment."
-    elif "chest pain" in user_input or "heart" in user_input:
-        return "Chest pain can be serious. Please seek immediate medical attention and consult a Cardiologist as soon as possible."
-    elif "headache" in user_input or "migraine" in user_input:
-        return "You may be experiencing a headache or migraine. Rest in a quiet dark room, stay hydrated, and consult a Neurologist if it is severe or recurring."
-    elif "cough" in user_input or "cold" in user_input or "flu" in user_input:
-        return "You may have a respiratory infection. Stay warm, drink warm fluids, and consult a General Physician if symptoms worsen."
-    elif "stomach" in user_input or "nausea" in user_input or "vomiting" in user_input:
-        return "You may have a gastrointestinal issue. Avoid heavy food, stay hydrated, and consult a Gastroenterologist if symptoms persist."
-    else:
-        return "Based on your symptoms, I recommend consulting a General Physician for a proper diagnosis. Please do not self-medicate."
-
 def play_audio_response(text):
-    """Generate TTS and auto-play it in the browser"""
+    """Auto-play voice response in browser"""
     audio_b64 = text_to_speech_base64(text)
     audio_html = f"""
     <div class="voice-box" style="text-align:center;">
-        <p style="color:#00c6ff; font-family:'Syne',sans-serif; font-size:14px; margin-bottom:12px;">
-            🔊 Assistant Voice Response
+        <p style="color:#00c6ff; font-family:'Syne',sans-serif; font-size:14px; font-weight:700; margin-bottom:12px;">
+            🔊 Assistant Voice Response — Auto Playing
         </p>
         <audio controls autoplay style="width:100%; border-radius:8px;">
             <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3">
@@ -131,11 +340,59 @@ def play_audio_response(text):
     """
     st.markdown(audio_html, unsafe_allow_html=True)
 
-# -------------------------
+def show_full_response(info, user_input_mode="text"):
+    """Display the full structured response card"""
+
+    # 1. Diagnosis Card
+    st.markdown(f"""
+    <div class="response-card">
+        <p style="color:#00c6ff; font-weight:700; font-size:17px; margin-bottom:8px;">
+            {info['emoji']} Detected Condition: {info['condition']}
+        </p>
+        <p style="color:rgba(255,255,255,0.85); font-size:15px; line-height:1.7; margin:0;">
+            {info['diagnosis']}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 2. First Aid Card
+    first_aid_items = "".join([
+        f'<li style="color:rgba(255,255,255,0.88); font-size:14px; margin-bottom:8px; line-height:1.6;">{item}</li>'
+        for item in info["first_aid"]
+    ])
+    st.markdown(f"""
+    <div class="firstaid-card">
+        <p style="color:#00ff88; font-weight:700; font-size:16px; margin-bottom:14px;">
+            🩹 First Aid & Home Treatment
+        </p>
+        <ul style="padding-left:18px; margin:0;">
+            {first_aid_items}
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 3. Specialist Card
+    st.markdown(f"""
+    <div class="specialist-card">
+        <p style="color:#ffb400; font-weight:700; font-size:15px; margin-bottom:4px;">
+            👨‍⚕️ Recommended Specialist
+        </p>
+        <p style="color:white; font-size:16px; margin:0; font-weight:600;">
+            {info['specialist']}
+        </p>
+        <p style="color:rgba(255,255,255,0.5); font-size:12px; margin-top:6px;">
+            Please book an appointment if symptoms persist or worsen.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 4. Voice Response (always plays)
+    play_audio_response(info["voice_response"])
+
+# -----------------------------------------------
 # Voice Recognition Component
-# -------------------------
+# -----------------------------------------------
 def voice_input_component():
-    """Browser-based voice recognition using Web Speech API"""
     voice_html = """
     <div style="
         background: linear-gradient(135deg, rgba(0,198,255,0.1), rgba(0,114,255,0.1));
@@ -150,7 +407,7 @@ def voice_input_component():
             🎙️ Voice Input
         </p>
         <p style="color:rgba(255,255,255,0.6); font-size:13px; margin-bottom:18px;">
-            Click the mic, speak your symptoms, then copy & paste the text below
+            Click the mic, speak your symptoms clearly, then copy & paste the text below
         </p>
 
         <button id="micBtn" onclick="toggleRecording()" style="
@@ -213,7 +470,6 @@ def voice_input_component():
                 cursor:pointer;
                 font-size:13px;
                 font-weight:600;
-                transition: all 0.2s ease;
             ">📋 Copy Text</button>
         </div>
     </div>
@@ -298,52 +554,34 @@ def voice_input_component():
     }
     </script>
     """
-    st.components.v1.html(voice_html, height=400)
+    st.components.v1.html(voice_html, height=420)
 
-# -------------------------
-# Symptom Checker with Voice
-# -------------------------
+# -----------------------------------------------
+# PAGES
+# -----------------------------------------------
+
 if option == "Symptom Checker":
     st.subheader("📝 Symptom Checker")
 
-    st.markdown("### 🎙️ Step 1 — Voice Input")
+    st.markdown("### 🎙️ Step 1 — Voice Input *(Chrome/Edge only)*")
     voice_input_component()
 
     st.markdown("### ✏️ Step 2 — Type or Paste Your Symptoms")
     user_input = st.text_area(
-        "Enter symptoms here (type directly or paste from voice above):",
-        placeholder="e.g. I have fever and headache since yesterday...",
+        "Describe your symptoms in detail:",
+        placeholder="e.g. I have fever, headache, and body aches since yesterday...",
         height=120
     )
 
-    st.markdown("### 🔍 Step 3 — Get Response")
-    if st.button("🔍 Analyze Symptoms & Get Voice Response"):
+    st.markdown("### 🔍 Step 3 — Get Full Response")
+    if st.button("🔍 Analyze & Get Voice Response"):
         if user_input.strip() != "":
             with st.spinner("Analyzing your symptoms..."):
-                response = get_assistant_response(user_input)
-
-            st.markdown(f"""
-            <div style="
-                background: linear-gradient(135deg, rgba(0,198,255,0.1), rgba(0,114,255,0.1));
-                border: 1px solid rgba(0,198,255,0.4);
-                border-radius: 16px;
-                padding: 20px 24px;
-                margin: 12px 0;
-            ">
-                <p style="color:#00c6ff; font-weight:700; margin-bottom:8px;">🤖 Assistant Response:</p>
-                <p style="color:white; font-size:16px; line-height:1.7; margin:0;">{response}</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-            # Auto-play voice response
-            play_audio_response(response)
-
+                info = get_disease_info(user_input)
+            show_full_response(info)
         else:
-            st.warning("Please enter your symptoms first — type or use the voice input above.")
+            st.warning("Please describe your symptoms first — type or use voice input above.")
 
-# -------------------------
-# Image Disease Scanner
-# -------------------------
 elif option == "Image Disease Scanner":
     st.header("📷 Upload Medical Image")
     uploaded_file = st.file_uploader("Upload image (skin / report / x-ray)", type=["jpg", "png", "jpeg"])
@@ -353,16 +591,16 @@ elif option == "Image Disease Scanner":
         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
         if st.button("Scan Image"):
             possible_diseases = [
-                ("Skin Infection", "Dermatologist"),
-                ("Pneumonia", "Pulmonologist"),
-                ("Fracture", "Orthopedic"),
-                ("Normal", "No Specialist Required")
+                ("skin infection", "Skin Infection"),
+                ("pneumonia", "Pneumonia"),
+                ("fracture", "Fracture"),
+                ("normal", "Normal — No Condition Detected"),
             ]
-            prediction = random.choice(possible_diseases)
-            result_text = f"Detected condition is {prediction[0]}. Recommended specialist is {prediction[1]}."
-            st.success(f"Detected Condition: {prediction[0]}")
-            st.write(f"Recommended Specialist: {prediction[1]}")
-            play_audio_response(result_text)
+            raw = random.choice(possible_diseases)
+            info = get_disease_info(raw[0])
+
+            st.markdown(f"**Scan Result:** {raw[1]}")
+            show_full_response(info)
 
             if user_city.strip() != "":
                 st.subheader("🏥 Suggested Nearby Hospital")
@@ -372,9 +610,6 @@ elif option == "Image Disease Scanner":
             else:
                 st.info("Enter your city to get hospital suggestions.")
 
-# -------------------------
-# Live Skin Scanner
-# -------------------------
 elif option == "Live Skin Scanner":
     st.header("📷 Live Skin Scanner")
     user_city = st.text_input("Enter your city for hospital suggestion:")
@@ -383,17 +618,10 @@ elif option == "Live Skin Scanner":
     if camera_image is not None:
         st.image(camera_image, caption="Captured Image", use_container_width=True)
         if st.button("Analyze Live Image"):
-            possible_diseases = [
-                ("Acne", "Dermatologist"),
-                ("Skin Allergy", "Dermatologist"),
-                ("Eczema", "Dermatologist"),
-                ("Normal Skin", "No Specialist Required")
-            ]
-            prediction = random.choice(possible_diseases)
-            result_text = f"Detected condition is {prediction[0]}. Recommended specialist is {prediction[1]}."
-            st.success(f"Detected Condition: {prediction[0]}")
-            st.write(f"Recommended Specialist: {prediction[1]}")
-            play_audio_response(result_text)
+            possible_keywords = ["rash", "rash", "itching", "eczema"]
+            keyword = random.choice(possible_keywords)
+            info = get_disease_info(keyword)
+            show_full_response(info)
 
             if user_city.strip() != "":
                 st.subheader("🏥 Suggested Nearby Hospital")
@@ -403,9 +631,6 @@ elif option == "Live Skin Scanner":
             else:
                 st.info("Enter your city to get hospital suggestions.")
 
-# -------------------------
-# World Famous Hospitals
-# -------------------------
 elif option == "World Famous Hospitals":
     st.header("🌍 World Famous Hospitals for Research & Treatment")
     st.markdown("Explore globally recognized hospitals known for advanced research and specialized treatments.")
