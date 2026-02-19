@@ -72,7 +72,7 @@ else:
 
 option = st.sidebar.selectbox(
     "Choose Service",
-    ["Symptom Checker", "Image Disease Scanner", "Live Skin Scanner"]
+    ["Symptom Checker", "Image Disease Scanner", "Live Skin Scanner", "World Famous Hospitals"]
 )
 
 # -----------------------------------
@@ -184,3 +184,61 @@ elif option == "Live Skin Scanner":
                 st.write(f"• Al-Shifa Health Clinic")
             else:
                 st.info("Enter your city to get hospital suggestions.")
+
+# -----------------------------------
+# 4️⃣ World Famous Hospitals
+# -----------------------------------
+
+elif option == "World Famous Hospitals":
+
+    st.header("🌍 World Famous Hospitals for Research & Treatment")
+
+    st.markdown("Explore globally recognized hospitals known for advanced research and specialized treatments.")
+
+    st.subheader("🏥 Top Multi-Specialty Hospitals")
+
+    st.markdown("""
+    - 🇺🇸 **Mayo Clinic**  
+      https://www.mayoclinic.org  
+
+    - 🇺🇸 **Cleveland Clinic**  
+      https://my.clevelandclinic.org  
+
+    - 🇺🇸 **Johns Hopkins Hospital**  
+      https://www.hopkinsmedicine.org  
+
+    - 🇩🇪 **Charité – Berlin University Hospital**  
+      https://www.charite.de  
+    """)
+
+    st.subheader("🎗 Cancer Research Centers")
+
+    st.markdown("""
+    - 🇺🇸 **MD Anderson Cancer Center**  
+      https://www.mdanderson.org  
+
+    - 🇬🇧 **Royal Marsden Hospital**  
+      https://www.royalmarsden.nhs.uk  
+    """)
+
+    st.subheader("❤️ Heart & Cardiology Institutes")
+
+    st.markdown("""
+    - 🇺🇸 **Texas Heart Institute**  
+      https://www.texasheart.org  
+
+    - 🇬🇧 **Royal Brompton Hospital**  
+      https://www.rbht.nhs.uk  
+    """)
+
+    st.subheader("🧠 Neurology & Brain Research")
+
+    st.markdown("""
+    - 🇺🇸 **Massachusetts General Hospital**  
+      https://www.massgeneral.org  
+
+    - 🇨🇭 **University Hospital Zurich**  
+      https://www.usz.ch  
+    """)
+
+    st.info("⚠ These links are for research and educational purposes only. Always consult certified medical professionals.")
