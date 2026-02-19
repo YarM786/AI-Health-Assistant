@@ -3,6 +3,53 @@ import random
 
 st.set_page_config(page_title="AI Healthcare Assistant", layout="wide")
 
+# ------------------------------
+# Custom AI Medical Background
+# ------------------------------
+
+page_bg = """
+<style>
+[data-testid="stAppViewContainer"] {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)),
+    url("https://images.unsplash.com/photo-1576091160550-2173dba999ef");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+[data-testid="stHeader"] {
+    background: rgba(0,0,0,0);
+}
+
+[data-testid="stSidebar"] {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+h1, h2, h3, h4, h5, h6, p, label {
+    color: white !important;
+}
+
+.stButton>button {
+    background-color: #00c6ff;
+    color: white;
+    border-radius: 10px;
+    font-weight: bold;
+    height: 45px;
+    width: 100%;
+}
+
+.stTextInput>div>div>input,
+.stTextArea textarea {
+    background-color: rgba(255,255,255,0.95);
+    color: black;
+    border-radius: 8px;
+}
+</style>
+"""
+
+st.markdown(page_bg, unsafe_allow_html=True)
+
 # Safely load API key
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
