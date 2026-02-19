@@ -3,8 +3,6 @@ import random
 from gtts import gTTS
 import tempfile
 import os
-import speech_recognition as sr
-from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 
 st.set_page_config(page_title="AI Healthcare Assistant", layout="wide")
 
@@ -59,7 +57,7 @@ option = st.sidebar.selectbox(
 )
 
 # -------------------------
-# Voice Input & Output Setup
+# Voice Output Setup
 # -------------------------
 def text_to_speech(text):
     """Convert text to audio for browser playback"""
@@ -69,9 +67,8 @@ def text_to_speech(text):
     return tmp_file.name
 
 def get_assistant_response(user_input):
-    """Generate assistant response (basic example, replace with AI if needed)"""
+    """Generate assistant response"""
     user_input = user_input.lower()
-    # Simple symptom check response
     if "fever" in user_input:
         return "It seems like you may have a fever. Please consult a General Physician."
     elif "rash" in user_input:
@@ -82,38 +79,27 @@ def get_assistant_response(user_input):
         return "It looks like a common infection. A General Physician can guide you further."
 
 # -------------------------
-# Symptom Checker with Voice
+# Symptom Checker
 # -------------------------
 if option == "Symptom Checker":
     st.subheader("📝 Describe your symptoms")
-    st.markdown("You can type your symptoms or use voice input below:")
+    st.markdown("Type your symptoms below and click Analyze:")
 
-    # Voice input
-    voice_button = st.button("🎤 Record Voice Input")
-    user_input = st.text_area("Or type your symptoms here:")
+    user_input = st.text_area("Enter your symptoms here:")
 
-    if voice_button:
-        st.info("Listening... Please speak clearly (max 10 sec).")
-        # Using microphone for speech recognition
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            try:
-                audio = recognizer.listen(source, timeout=10)
-                user_input = recognizer.recognize_google(audio)
-                st.success(f"You said: {user_input}")
-            except sr.UnknownValueError:
-                st.error("Sorry, could not understand your voice.")
-            except sr.RequestError:
-                st.error("Speech recognition service failed.")
+    if st.button("Analyze Symptoms"):
+        if user_input.strip() != "":
+            response = get_assistant_response(user_input)
+            st.success(f"Assistant: {response}")
 
-    if st.button("Analyze Symptoms") and user_input.strip() != "":
-        response = get_assistant_response(user_input)
-        st.success(f"Assistant: {response}")
-
-        # Generate and play audio response
-        audio_file = text_to_speech(response)
-        st.audio(audio_file)
-        os.remove(audio_file)
+            # Generate and play audio response
+            audio_file = text_to_speech(response)
+            with open(audio_file, "rb") as f:
+                audio_bytes = f.read()
+            st.audio(audio_bytes, format="audio/mp3")
+            os.remove(audio_file)
+        else:
+            st.warning("Please enter your symptoms first.")
 
 # -------------------------
 # Image Disease Scanner
@@ -124,7 +110,7 @@ elif option == "Image Disease Scanner":
     user_city = st.text_input("Enter your city for nearby hospital suggestion:")
 
     if uploaded_file is not None:
-        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+        st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
         if st.button("Scan Image"):
             possible_diseases = [
                 ("Skin Infection", "Dermatologist"),
@@ -153,7 +139,7 @@ elif option == "Live Skin Scanner":
     camera_image = st.camera_input("Take a photo of your skin area")
 
     if camera_image is not None:
-        st.image(camera_image, caption="Captured Image", use_column_width=True)
+        st.image(camera_image, caption="Captured Image", use_container_width=True)
         if st.button("Analyze Live Image"):
             possible_diseases = [
                 ("Acne", "Dermatologist"),
