@@ -2,8 +2,3 @@ streamlit
 numpy
 pillow
 gTTS
-SpeechRecognition
-PyAudio
-
-
-
